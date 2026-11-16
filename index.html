@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>IP纯净度检测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --card2:#f0f2f0; --text:#101613; --muted:#6b7770; --line:#e2e7e3;
+  --green:#0f9d58; --green-bg:#e6f4ea; --yellow:#e37400; --yellow-bg:#fef7e0; --red:#d93025; --red-bg:#fce8e6;
+  --teal:#0e7a6d; --teal-dark:#0a5e54; --chip:#eef3f1; --shadow:0 4px 24px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1412; --card:#171d1a; --card2:#1e2622; --text:#e8edea; --muted:#9aa8a0; --line:#2a332e; --chip:#222b27; --shadow:0 4px 24px rgba(0,0,0,.35); --green-bg:#123524; --yellow-bg:#3a2e0a; --red-bg:#3d1714; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans SC",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.6}
+a{color:var(--teal)}
+button,input{min-height:44px}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 48px}
+.top{padding:28px 0 8px}
+.top h1{font-size:32px;line-height:1.15;margin:0;font-weight:900;letter-spacing:-.02em}
+.top h1 span{color:var(--teal)}
+.top p{color:var(--muted);margin:8px 0 0;font-size:15px;max-width:640px}
+.searchbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:var(--shadow)}
+.searchbar input{flex:1 1 240px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:0 14px;font-size:16px;font-family:"JetBrains Mono",monospace;color:var(--text);outline:none}
+.searchbar input:focus{border-color:var(--teal)}
+.btn{border:0;border-radius:10px;padding:0 20px;font-weight:700;font-size:15px;cursor:pointer}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:active{background:var(--teal-dark)}
+.btn-ghost{background:var(--chip);color:var(--text)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.pill{font-size:12px;background:var(--chip);border:1px solid var(--line);padding:6px 10px;border-radius:999px;color:var(--muted)}
+.pill b{color:var(--text)}
+.maincard{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.hero{display:grid;grid-template-columns:210px 1fr;gap:8px;padding:26px}
+@media(max-width:640px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.hero .iprow{justify-content:center}.hero .tags{justify-content:center}}
+.gauge-wrap{width:190px;height:190px;position:relative}
+.gauge-wrap svg{transform:rotate(-90deg)}
+.gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-num{font-size:52px;font-weight:900;line-height:1;font-family:"JetBrains Mono",monospace}
+.gauge-label{font-size:13px;color:var(--muted);margin-top:4px}
+.iprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ip-text{font-family:"JetBrains Mono",monospace;font-size:28px;font-weight:700;word-break:break-all;line-height:1.2}
+@media(max-width:480px){.ip-text{font-size:22px}}
+.copybtn{height:36px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:13px}
+.verdict{font-size:22px;font-weight:900;margin:10px 0 4px}
+.verdict-sub{color:var(--muted);font-size:14px;max-width:560px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tag{font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.tag-gray{background:var(--chip);color:var(--muted)}
+.meta{font-size:12px;color:var(--muted);margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.card h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+.card h3 i{width:28px;height:28px;border-radius:8px;background:var(--chip);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:15px}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.kv:last-child{border:0}
+.kv span{color:var(--muted);flex-shrink:0}
+.kv b{text-align:right;word-break:break-all;font-weight:600}
+.factors{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:720px){.factors{grid-template-columns:1fr}}
+.factor{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card2)}
+.dot{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:900}
+.dot.ok{background:var(--green-bg);color:var(--green)}
+.dot.warn{background:var(--yellow-bg);color:var(--yellow)}
+.dot.bad{background:var(--red-bg);color:var(--red)}
+.factor b{font-size:14px;display:block}
+.factor p{margin:2px 0 0;font-size:13px;color:var(--muted);line-height:1.5}
+.bar-row{margin:10px 0}
+.bar-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bar{height:8px;background:var(--chip);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;transition:width .6s}
+.map{width:100%;height:280px;border:0;border-radius:12px;background:var(--chip)}
+.loading{padding:48px 20px;text-align:center;color:var(--muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{margin:14px 0;padding:14px 16px;border-radius:12px;background:var(--red-bg);color:var(--red);font-size:14px;display:none}
+.note{font-size:13px;color:var(--muted);line-height:1.7}
+.score-table{width:100%;border-collapse:collapse;font-size:14px}
+.score-table th,.score-table td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+.score-table th{color:var(--muted);font-weight:500}
+.footer{margin-top:22px;font-size:12px;color:var(--muted);text-align:center;line-height:1.7}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>IP <span>纯净度</span>检测</h1>
+    <p>检测当前出口 IP 的风险与纯净度：机房 / 住宅属性、代理与 VPN 特征、时区与语言一致性、WebRTC 泄露。多维度综合评分，一眼看清这个 IP 干不干净。</p>
+  </div>
+
+  <form class="searchbar" id="searchForm">
+    <input id="ipInput" placeholder="输入要查询的 IP，如 8.8.8.8，留空查自己的 IP" autocomplete="off" spellcheck="false">
+    <button class="btn btn-primary" type="submit">开始检测</button>
+    <button class="btn btn-ghost" type="button" id="myIpBtn">检测我的 IP</button>
+  </form>
+
+  <div class="toolbar">
+    <span class="pill">数据来源 <b>ipwho.is · ipapi.co</b></span>
+    <span class="pill">检测方式 <b>浏览器端实时查询</b></span>
+    <span class="pill" id="timePill">查询时间 <b>—</b></span>
+  </div>
+
+  <div class="error" id="errorBox"></div>
+
+  <div id="loading" class="maincard loading">
+    <div class="spinner"></div>
+    <div>正在获取 IP 信息并计算纯净度…</div>
+    <div style="font-size:13px;margin-top:6px">正在查询地理位置、ASN、运营商与风险特征</div>
+  </div>
+
+  <div id="result" class="hidden">
+    <section class="maincard">
+      <div class="hero">
+        <div class="gauge-wrap">
+          <svg width="190" height="190" viewBox="0 0 190 190">
+            <circle cx="95" cy="95" r="78" fill="none" stroke="var(--line)" stroke-width="14"/>
+            <circle id="gaugeArc" cx="95" cy="95" r="78" fill="none" stroke="#0f9d58" stroke-width="14" stroke-linecap="round" stroke-dasharray="490" stroke-dashoffset="490"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-num" id="scoreNum">—</div>
+            <div class="gauge-label">纯净度评分 / 100</div>
+            <div id="scoreLevel" style="font-weight:900;margin-top:4px">—</div>
+          </div>
+        </div>
+        <div style="min-width:0">
+          <div style="font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700">当前检测 IP</div>
+          <div class="iprow" style="margin-top:6px">
+            <span class="ip-text" id="ipText">—</span>
+            <button class="copybtn" id="copyBtn" type="button">复制 IP</button>
+          </div>
+          <div class="verdict" id="verdict">—</div>
+          <p class="verdict-sub" id="verdictSub">—</p>
+          <div class="tags" id="tags"></div>
+          <div class="meta" id="metaLine"></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--line);padding:14px 18px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)">
+        <span>📍 <b id="quickLoc" style="color:var(--text)">—</b></span>
+        <span>🏢 <b id="quickIsp" style="color:var(--text)">—</b></span>
+        <span>🔢 <b id="quickAsn" style="color:var(--text)">—</b></span>
+      </div>
+    </section>
+    <div class="grid">
+      <div class="card">
+        <h3><i>🌍</i> 地理位置</h3>
+        <div id="geoKv"></div>
+      </div>
+      <div class="card">
+        <h3><i>📡</i> 网络与运营商</h3>
+        <div id="netKv"></div>
+      </div>
+      <div class="card">
+        <h3><i>🖥️</i> 浏览器环境</h3>
+        <div id="browserKv"></div>
+      </div>
+      <div class="card">
+        <h3><i>📊</i> 评分构成</h3>
+        <div id="bars"></div>
+        <p class="note" style="margin-top:10px">评分基于公开 ASN / ISP 特征、IP 属性与环境一致性估算，不同平台的风控结果会有差异，仅供参考。</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3><i>🛡️</i> 风险因子逐项检测</h3>
+      <ul class="factors" id="factors"></ul>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3><i>🗺️</i> IP 定位地图</h3>
+        <iframe class="map" id="mapFrame" title="IP定位地图" loading="lazy"></iframe>
+        <p class="note" style="margin-top:8px">定位为城市级估算，来自 IP 数据库，非 GPS 精确定位。</p>
+      </div>
+      <div class="card">
+        <h3><i>ℹ️</i> 怎么看纯净度？</h3>
+        <table class="score-table">
+          <tr><th>分数</th><th>等级</th><th>说明</th></tr>
+          <tr><td><b>90–100</b></td><td style="color:var(--green);font-weight:700">极度纯净</td><td>原生住宅 IP，无明显风险特征</td></tr>
+          <tr><td><b>75–89</b></td><td style="color:var(--green);font-weight:700">纯净</td><td>住宅 IP，少量扣分项</td></tr>
+          <tr><td><b>60–74</b></td><td style="color:var(--yellow);font-weight:700">一般</td><td>有部分风险特征，注意使用场景</td></tr>
+          <tr><td><b>40–59</b></td><td style="color:var(--red);font-weight:700">风险较高</td><td>机房 / 代理特征明显</td></tr>
+          <tr><td><b>0–39</b></td><td style="color:var(--red);font-weight:700">高风险</td><td>典型机房、VPN 或 Tor 出口</td></tr>
+        </table>
+        <p class="note" style="margin-top:10px">常见扣分：机房托管 ASN −35、云厂商 −25、VPN/代理关键词 −30、时区与 IP 国家不一致 −15、语言不一致 −10、WebRTC 泄露真实 IP −10。</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">纯净度为浏览器端基于公开数据库的特征估算，不等同于任何单一平台的风控结论。<br>地理与运营商数据由 ipwho.is / ipapi.co 提供 · 地图 © OpenStreetMap</p>
+</div>
+
+<script>
+var hostingKw=['cloud','hosting','datacenter','data center','data-center','vps','server','dedicated','colocation','colo','amazon','aws','google cloud','gcp','azure','microsoft','alibaba','aliyun','tencent cloud','oracle cloud','digitalocean','linode','vultr','hetzner','ovh','cloudflare','akamai','leaseweb','contabo','rack','host','idc','机房','托管'];
+var vpnKw=['vpn','proxy','tor ','tor-','tunnel','anonymous','anonymizer','nordvpn','expressvpn','surfshark','mullvad','proton','windscribe','hide.me','private internet'];
+var cloudOrgKw=['amazon','google','microsoft','alibaba','aliyun','tencent','oracle','digitalocean','linode','vultr','hetzner','ovh','cloudflare'];
+function $(id){return document.getElementById(id)}
+function esc(s){ if(s===null||s===undefined) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function containsAny(str,list){ if(!str) return null; var s=str.toLowerCase(); for(var i=0;i<list.length;i++){ if(s.indexOf(list[i])!==-1) return list[i]; } return null; }
+function kv(label,val){ return '<div class="kv"><span>'+esc(label)+'</span><b>'+esc(val||'—')+'</b></div>'; }
+function kvHtml(label,html){ return '<div class="kv"><span>'+esc(label)+'</span><b>'+html+'</b></div>'; }
+function setError(msg){ var e=$('errorBox'); if(!msg){e.style.display='none';return;} e.textContent=msg; e.style.display='block'; }
+function isValidIP(ip){
+  if(!ip) return true;
+  var v4=/^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+  var v6=/^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+  return v4.test(ip)||v6.test(ip);
+}
+
+var tzCountry={'Asia/Shanghai':'CN','Asia/Chongqing':'CN','Asia/Hong_Kong':'HK','Asia/Taipei':'TW','Asia/Tokyo':'JP','Asia/Seoul':'KR','Asia/Singapore':'SG','America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US','America/Toronto':'CA','Europe/London':'GB','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Moscow':'RU','Australia/Sydney':'AU','Pacific/Auckland':'NZ'};
+var langCountry={'zh-cn':'CN','zh-hans':'CN','zh-tw':'TW','zh-hk':'HK','en-us':'US','en-gb':'GB','en-au':'AU','en-ca':'CA','ja':'JP','ja-jp':'JP','ko':'KR','ko-kr':'KR','de':'DE','de-de':'DE','fr':'FR','fr-fr':'FR','ru':'RU','ru-ru':'RU'};
+
+var webrtcIPs=[];
+function detectWebRTC(){
+  return new Promise(function(resolve){
+    try{
+      var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+      pc.createDataChannel('');
+      pc.onicecandidate=function(e){
+        if(!e.candidate) { resolve(webrtcIPs); return; }
+        var m=/([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9:]{6,})/i.exec(e.candidate.candidate);
+        if(m && webrtcIPs.indexOf(m[1])===-1) webrtcIPs.push(m[1]);
+      };
+      pc.createOffer().then(function(o){ pc.setLocalDescription(o); });
+      setTimeout(function(){ resolve(webrtcIPs); },1800);
+    }catch(e){ resolve([]); }
+  });
+}
+async function fetchIPInfo(ip){
+  var url1 = ip ? 'https://ipwho.is/'+encodeURIComponent(ip) : 'https://ipwho.is/';
+  try{
+    var r=await fetch(url1); var j=await r.json();
+    if(j && j.success!==false && j.ip){
+      return { ip:j.ip, country:j.country||'', countryCode:j.country_code||'', region:j.region||'', city:j.city||'', lat:j.latitude, lon:j.longitude, isp:(j.connection&&j.connection.isp)||'', org:(j.connection&&j.connection.org)||'', asn:(j.connection&&j.connection.asn)?('AS'+j.connection.asn):'', domain:(j.connection&&j.connection.domain)||'', timezone:(j.timezone&&j.timezone.id)||'', type:j.type||'' };
+    }
+    throw new Error('ipwho fail');
+  }catch(e){
+    var url2 = ip ? 'https://ipapi.co/'+encodeURIComponent(ip)+'/json/' : 'https://ipapi.co/json/';
+    var r2=await fetch(url2); var k=await r2.json();
+    if(!k || k.error) throw new Error(k&&k.reason?k.reason:'查询失败，该 IP 可能不存在或为保留地址');
+    return { ip:k.ip, country:k.country_name||'', countryCode:k.country_code||'', region:k.region||'', city:k.city||'', lat:k.latitude, lon:k.longitude, isp:k.org||'', org:k.org||'', asn:k.asn||'', domain:'', timezone:k.timezone||'', type:k.version||'' };
+  }
+}
+
+function calcScore(d, browserTz, browserLang, rtcIPs){
+  var deductions=[];
+  var orgStr=((d.isp||'')+' '+(d.org||'')+' '+(d.domain||'')).toLowerCase();
+  var hostHit=containsAny(orgStr, hostingKw);
+  var vpnHit=containsAny(orgStr, vpnKw);
+  var cloudHit=containsAny(orgStr, cloudOrgKw);
+  var isHosting=!!hostHit;
+  var isCloud=!!cloudHit;
+
+  var base=100;
+  var items=[
+    {label:'基础分', val:100, max:100},
+  ];
+  var score=100;
+  function deduct(label, pts, reason){ if(pts>0){ score-=pts; deductions.push({label:label,pts:pts,reason:reason}); } }
+
+  if(isHosting) deduct('机房 / 托管属性', 35, 'ISP/组织包含托管特征：'+hostHit);
+  if(isCloud) deduct('云厂商 ASN', 15, '属于知名云厂商网络');
+  if(vpnHit) deduct('VPN / 代理特征', 30, '组织名包含：'+vpnHit);
+
+  var expectedTzCountry = tzCountry[browserTz];
+  var tzMismatch = expectedTzCountry && d.countryCode && expectedTzCountry!==d.countryCode;
+  if(tzMismatch) deduct('时区不一致', 15, '浏览器时区 '+browserTz+' 与 IP 国家 '+d.countryCode+' 不符');
+
+  var expectedLangCountry = langCountry[(browserLang||'').toLowerCase()];
+  var langMismatch = expectedLangCountry && d.countryCode && expectedLangCountry!==d.countryCode;
+  if(langMismatch) deduct('语言不一致', 10, '浏览器语言 '+browserLang+' 与 IP 国家不符');
+  var rtcLeak=false, rtcPublic=null;
+  for(var i=0;i<rtcIPs.length;i++){ var rip=rtcIPs[i]; if(rip && rip!==d.ip && !/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.)/.test(rip) && rip.indexOf(':')===-1 && rip.indexOf('.')!==-1){ rtcLeak=true; rtcPublic=rip; } }
+  var isOwnQuery = !document.getElementById('ipInput').value.trim();
+  if(rtcLeak && isOwnQuery) deduct('WebRTC 泄露', 10, 'WebRTC 暴露了另一个公网 IP：'+rtcPublic);
+
+  if(score<2) score=2; if(score>100) score=100;
+
+  var level, color, verdict, sub;
+  if(score>=90){ level='极度纯净'; color='#0f9d58'; verdict='极度纯净 · 原生住宅 IP'; sub='未发现机房、代理等明显风险特征，环境一致性良好。这类 IP 在注册、养号、流媒体解锁等场景中通常最不容易触发风控。'; }
+  else if(score>=75){ level='纯净'; color='#0f9d58'; verdict='纯净 · 住宅 IP'; sub='整体干净，仅有少量扣分项。日常使用、流媒体与社交平台一般不会受限。'; }
+  else if(score>=60){ level='一般'; color='#e37400'; verdict='一般 · 有部分风险特征'; sub='存在一些可疑特征，可能是运营商 NAT、地区不一致或轻度托管属性。敏感平台可能会要求额外验证。'; }
+  else if(score>=40){ level='风险较高'; color='#d93025'; verdict='风险较高 · 机房 / 代理特征明显'; sub='检测到较强的机房或代理特征，很多平台会限制注册、触发验证码或封禁，请谨慎用于重要账号。'; }
+  else { level='高风险'; color='#d93025'; verdict='高风险 · 典型机房 / VPN 出口'; sub='多项高风险特征叠加，极易被各平台风控识别。不建议用于注册、支付、养号等敏感操作。'; }
+
+  return {score:score, level:level, color:color, verdict:verdict, sub:sub, isHosting:isHosting, isCloud:isCloud, vpnHit:vpnHit, hostHit:hostHit, tzMismatch:tzMismatch, langMismatch:langMismatch, rtcLeak:rtcLeak&&isOwnQuery, rtcPublic:rtcPublic, deductions:deductions, isOwnQuery:isOwnQuery};
+}
+function render(d, s){
+  $('loading').classList.add('hidden');
+  $('result').classList.remove('hidden');
+  $('scoreNum').textContent=s.score;
+  $('scoreNum').style.color=s.color;
+  var lvl=$('scoreLevel'); lvl.textContent=s.level; lvl.style.color=s.color;
+  var arc=$('gaugeArc'); var c=490; arc.style.stroke=s.color; arc.style.transition='stroke-dashoffset .8s ease'; setTimeout(function(){ arc.style.strokeDashoffset = c - c*s.score/100; },50);
+  $('ipText').textContent=d.ip;
+  $('verdict').textContent=s.verdict;
+  $('verdictSub').textContent=s.sub;
+  $('quickLoc').textContent=[d.country,d.region,d.city].filter(Boolean).join(' · ')||'—';
+  $('quickIsp').textContent=d.isp||d.org||'—';
+  $('quickAsn').textContent=d.asn||'—';
+  $('metaLine').textContent='IP 类型 '+(d.type||'—')+' · 时区 '+(d.timezone||'—')+' · 数据更新于 '+new Date().toLocaleString('zh-CN',{hour12:false});
+
+  var tags='';
+  tags+='<span class="tag '+(s.isHosting?'tag-red':'tag-green')+'">'+(s.isHosting?'🏢 机房 IP':'🏠 住宅 IP')+'</span>';
+  tags+='<span class="tag '+(s.vpnHit?'tag-red':'tag-green')+'">'+(s.vpnHit?'⚠️ 疑似 VPN/代理':'✓ 未检出 VPN/代理')+'</span>';
+  tags+='<span class="tag '+(s.tzMismatch?'tag-yellow':'tag-green')+'">'+(s.tzMismatch?'🕐 时区不一致':'🕐 时区一致')+'</span>';
+  tags+='<span class="tag tag-gray">🌐 '+esc(d.countryCode||'')+' '+esc(d.country||'')+'</span>';
+  $('tags').innerHTML=tags;
+
+  $('geoKv').innerHTML=kv('国家 / 地区',(d.country||'')+' ('+(d.countryCode||'')+')')+kv('省 / 州',d.region)+kv('城市',d.city)+kv('经纬度',(d.lat&&d.lon)?(d.lat.toFixed(4)+', '+d.lon.toFixed(4)):'—')+kv('时区',d.timezone);
+  $('netKv').innerHTML=kv('运营商 ISP',d.isp)+kv('组织 Org',d.org)+kv('ASN',d.asn)+kv('域名',d.domain)+kv('IP 版本',d.type)+kv('属性判断',s.isHosting?'机房 / 托管':'住宅 / 宽带');
+
+  var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'—';
+  var lang=navigator.language||'—';
+  var ua=navigator.userAgent||'';
+  var plat=navigator.platform||'—';
+  $('browserKv').innerHTML=kv('浏览器时区',tz)+kv('浏览器语言',lang)+kv('系统平台',plat)+kv('WebRTC 公网 IP', s.rtcPublic||'未泄露 / 未检出')+kvHtml('User-Agent','<span style="font-size:11px;font-family:monospace">'+esc(ua.slice(0,90))+'…</span>');
+  var barsHtml='<div class="bar-row"><div class="bar-head"><span>综合纯净度</span><b>'+s.score+' 分</b></div><div class="bar"><i style="width:'+s.score+'%;background:'+s.color+'"></i></div></div>';
+  if(s.deductions.length===0){ barsHtml+='<p class="note">无任何扣分项，所有检测维度均通过。</p>'; }
+  s.deductions.forEach(function(dd){
+    barsHtml+='<div class="bar-row"><div class="bar-head"><span>'+esc(dd.label)+'</span><b style="color:var(--red)">−'+dd.pts+'</b></div><div class="bar"><i style="width:'+dd.pts+'%;background:#d93025"></i></div></div><div class="note">'+esc(dd.reason)+'</div>';
+  });
+  $('bars').innerHTML=barsHtml;
+
+  function factor(state, title, desc){
+    var icon= state==='ok'?'✓':(state==='warn'?'!':'✕');
+    return '<li class="factor"><span class="dot '+state+'">'+icon+'</span><span><b>'+esc(title)+'</b><p>'+esc(desc)+'</p></span></li>';
+  }
+  var f='';
+  f+=factor(s.isHosting?'bad':'ok', s.isHosting?'机房 IP':'住宅 IP', s.isHosting?('ISP/组织命中托管特征「'+s.hostHit+'」，多为数据中心分配。'): '未命中机房/托管关键词，更像家庭宽带或移动网络分配。');
+  f+=factor(s.vpnHit?'bad':'ok', s.vpnHit?'疑似 VPN / 代理':'未检出 VPN / 代理', s.vpnHit?('组织名命中「'+s.vpnHit+'」。'): '组织与 ASN 名称未出现 VPN、Proxy、Tunnel 等特征词。');
+  f+=factor(s.isCloud?'warn':'ok', s.isCloud?'云厂商网络':'非云厂商网络', s.isCloud?'该 IP 属于知名云厂商 ASN，常被平台标记为非住宅。':'未命中 AWS / Google Cloud / Azure / 阿里云 / 腾讯云等云厂商。');
+  f+=factor(s.tzMismatch?'warn':'ok', s.tzMismatch?'时区不一致':'时区一致', s.tzMismatch?'浏览器时区与 IP 所在国家不一致，是代理/VPN 的常见旁证。':'浏览器时区与 IP 所在国家匹配。');
+  f+=factor(s.langMismatch?'warn':'ok', s.langMismatch?'语言不一致':'语言一致', s.langMismatch?'浏览器语言与 IP 国家常用语言不一致。':'浏览器语言与 IP 国家匹配。');
+  f+=factor(s.rtcLeak?'bad':'ok', s.rtcLeak?'WebRTC 泄露':'WebRTC 未泄露', s.rtcLeak?('WebRTC 暴露了另一个公网 IP：'+s.rtcPublic+'，真实出口可能被识别。'):(s.isOwnQuery?'未通过 WebRTC 拿到与当前 IP 不同的公网地址。':'查询他人 IP 时不检测 WebRTC（仅对本机有效）。'));
+  $('factors').innerHTML=f;
+
+  if(d.lat && d.lon){
+    var bbox=(d.lon-0.25)+','+(d.lat-0.15)+','+(d.lon+0.25)+','+(d.lat+0.15);
+    $('mapFrame').src='https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent(bbox)+'&layer=mapnik&marker='+d.lat+','+d.lon;
+  } else {
+    $('mapFrame').removeAttribute('src');
+  }
+  $('timePill').innerHTML='查询时间 <b>'+new Date().toLocaleString('zh-CN',{hour12:false})+'</b>';
+}
+
+async function run(ip){
+  setError('');
+  $('result').classList.add('hidden');
+  $('loading').classList.remove('hidden');
+  var rtcPromise = detectWebRTC();
+  try{
+    var data=await fetchIPInfo(ip||'');
+    var rtc=await rtcPromise;
+    var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+    var s=calcScore(data, tz, navigator.language||'', rtc);
+    render(data,s);
+  }catch(e){
+    $('loading').classList.add('hidden');
+    setError('检测失败：'+(e.message||'网络异常，请稍后重试。若查询的是内网/保留 IP，公开数据库无记录。'));
+  }
+}
+
+$('searchForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var v=$('ipInput').value.trim();
+  if(v && !isValidIP(v)){ setError('IP 格式不正确，请输入有效的 IPv4 或 IPv6 地址，或留空检测自己的 IP。'); return; }
+  run(v);
+});
+$('myIpBtn').addEventListener('click',function(){ $('ipInput').value=''; run(''); });
+$('copyBtn').addEventListener('click',function(){
+  var t=$('ipText').textContent;
+  if(navigator.clipboard) navigator.clipboard.writeText(t);
+  this.textContent='已复制 ✓'; var b=this; setTimeout(function(){b.textContent='复制 IP';},1500);
+});
+
+run('');
+</script>
+</body>
+</html>
